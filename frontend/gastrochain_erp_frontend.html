@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GastroChain ERP - Sistema de Gestión Integral</title> <!-- Document Title -->
+    <!-- Tailwind CSS for Responsive Layout & Styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- html2pdf.js library for generating PDF reports directly in browser -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fffbeb',
+                            100: '#fef3c7',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                            700: '#b45309',
+                        },
+                        slate: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            200: '#e2e8f0',
+                            700: '#334155',
+                            800: '#1e293b',
+                            900: '#0f172a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Light Theme Scrollbar and Print Rules */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .pdf-template {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #1e293b;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+    <!-- LOGIN MODAL / VIEW (DYNAMIC OVERLAY) -->
+    <div id="loginModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 transition-opacity">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 border border-slate-200">
+            <div class="flex items-center justify-center gap-3 mb-6">
+                <div class="w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center text-white font-bold text-2xl shadow-lg shadow-amber-500/30">
+                    <i data-lucide="utensils-crossed"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-slate-900 tracking-tight">GastroChain <span class="text-amber-600">ERP</span></h1>
+            </div>
+            
+            <p class="text-center text-slate-500 text-sm mb-6"> ingresa con tu usuario para continuar:</p>
+            
+            <!-- Quick Demo Selectors -->
+    
+            <!-- Login Form -->
+            <form onsubmit="handleLoginSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Correo Electrónico</label>
+                    <input type="email" id="loginEmail" value="admin@gastrochain.co" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Contraseña</label>
+                    <input type="password" id="loginPass" value="••••••••" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all">
+                </div>
+                <button type="submit" class="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold rounded-xl shadow-md shadow-amber-500/20 transition-all text-sm">
+                    Ingresar al Sistema
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN APP STRUCTURE (VISIBLE AFTER LOGIN) -->
+    <div id="appContainer" class="hidden flex-1 flex flex-col md:flex-row min-h-screen">
+        
+        <!-- SIDEBAR NAVIGATION -->
+        <aside class="w-full md:w-64 bg-white border-r border-slate-200 flex flex-col justify-between shrink-0">
+            <div>
+                <!-- Brand Header -->
+                <div class="p-6 border-b border-slate-100 flex items-center gap-3">
+                    <div class="w-9 h-9 bg-amber-500 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                        <i data-lucide="utensils-crossed" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-slate-900 leading-none text-base">GastroChain</h2>
+                        <span class="text-[10px] text-amber-600 font-semibold tracking-wider uppercase">ERP v2.4 Multi-Sede</span>
+                    </div>
+                </div>
+
+                <!-- Current User Profile Widget -->
+                <div class="p-4 m-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center gap-3">
+                    <div id="userAvatar" class="w-10 h-10 rounded-full bg-amber-500 text-white font-bold flex items-center justify-center text-sm shadow-sm">
+                        DC
+                    </div>
+                    <div class="overflow-hidden">
+                        <p id="userName" class="text-xs font-bold text-slate-900 truncate">Danna Castillo</p>
+                        <p id="userRoleBadge" class="text-[10px] font-semibold text-amber-600 uppercase tracking-wider">Dueño (Admin)</p>
+                    </div>
+                </div>
+
+                <!-- Navigation Links -->
+                <nav class="px-3 space-y-1 mt-2" id="navLinks">
+                    <!-- Nav buttons populated dynamically based on role -->
+                </nav>
+            </div>
+
+            <!-- Footer Info & Logout -->
+            <div class="p-4 border-t border-slate-100">
+                <button onclick="logout()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-red-600 text-xs font-semibold transition-colors">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                    <span>Cerrar Sesión</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- CONTENT AREA -->
+        <main class="flex-1 flex flex-col bg-slate-50 min-w-0 overflow-y-auto">
+            
+            <!-- TOP NAVBAR / BRANCH SELECTOR & ALERTS -->
+            <header class="bg-white border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sticky top-0 z-20">
+                <div class="flex items-center gap-3">
+                    <h2 id="currentViewTitle" class="text-xl font-bold text-slate-900 tracking-tight">Panel de Control (BI)</h2>
+                    <span id="branchBadge" class="px-2.5 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full border border-amber-200">
+                        Todas las Sedes
+                    </span>
+                </div>
+
+                <div class="flex items-center gap-4 w-full sm:w-auto justify-end">
+                    <!-- Global Capacity Warning (Calculated dynamically) -->
+                    <div id="topAforoBadge" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span id="topAforoText">Aforo Chapinero: 68% (Normal)</span>
+                    </div>
+
+                    <!-- Branch Selector -->
+                    <select id="branchSelector" onchange="changeBranch(this.value)" class="text-xs font-semibold text-slate-700 bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        <option value="todas">Todas las sedes (Bogotá)</option>
+                        <option value="chapinero" selected>Sede Chapinero</option>
+                        <option value="zonarosa">Sede Zona Rosa</option>
+                        <option value="usaquen">Sede Usaquén</option>
+                    </select>
+                </div>
+            </header>
+
+            <!-- VIEW CONTAINER -->
+            <div class="p-6 space-y-6 max-w-7xl w-full mx-auto">
+                
+                <!-- 1. DASHBOARD VIEW -->
+                <section id="viewDashboard" class="space-y-6">
+                    <!-- Key Performance Metrics Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ventas Hoy</p>
+                                <h3 class="text-2xl font-bold text-slate-900 mt-1">$11.240.000</h3>
+                                <p class="text-xs font-semibold text-emerald-600 mt-1 flex items-center gap-1">
+                                    <i data-lucide="trending-up" class="w-3.5 h-3.5"></i> +18.3% vs. semana anterior
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
+                                <i data-lucide="dollar-sign" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Reservas Hoy</p>
+                                <h3 class="text-2xl font-bold text-slate-900 mt-1" id="dashReservationsCount">47 Mesas</h3>
+                                <p class="text-xs font-semibold text-blue-600 mt-1 flex items-center gap-1">
+                                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i> 312 Cubiertos estimados
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                                <i data-lucide="users" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+
+                        <!-- Turnos Operativos Activos -->
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Turno Actual</p>
+                                <h3 class="text-xl font-bold text-slate-900 mt-1" id="dashTurnoActual">Mañana (07:00 - 15:00)</h3>
+                                <p class="text-xs font-semibold text-emerald-600 mt-1 flex items-center gap-1">
+                                    <i data-lucide="clock" class="w-3.5 h-3.5"></i> 6 Colaboradores en servicio
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
+                                <i data-lucide="clock" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Aforo Chapinero</p>
+                                <h3 class="text-2xl font-bold text-slate-900 mt-1" id="dashAforoPercent">68%</h3>
+                                <div class="w-32 bg-slate-100 rounded-full h-2 mt-2">
+                                    <div id="dashAforoBar" class="bg-emerald-500 h-2 rounded-full" style="width: 68%;"></div>
+                                </div>
+                            </div>
+                            <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
+                                <i data-lucide="pie-chart" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Plato Estrella</p>
+                                <h3 class="text-lg font-bold text-slate-900 mt-1 truncate">Lomo al Trapo</h3>
+                                <p class="text-xs font-semibold text-amber-600 mt-1">142 Unidades vendidas</p>
+                            </div>
+                            <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center">
+                                <i data-lucide="award" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Critical Aforo Notification Banner (Dynamic) -->
+                    <div id="alertAforoBanner" class="hidden bg-red-50 border-l-4 border-red-500 p-4 rounded-xl flex items-center justify-between shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="alert-triangle" class="w-6 h-6 text-red-600 shrink-0"></i>
+                            <div>
+                                <h4 class="text-sm font-bold text-red-900">¡Alerta Crítica de Aforo (&ge; 90%)!</h4>
+                                <p class="text-xs text-red-700">La Sede Chapinero ha superado el 90% de ocupación de mesas. Se recomienda pausar nuevas reservas espontáneas.</p>
+                            </div>
+                        </div>
+                        <button onclick="dismissAforoAlert()" class="px-3 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-lg hover:bg-red-200 transition-colors">Entendido</button>
+                    </div>
+
+                    <!-- Visual Charts Simulation & Recent Activity -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Left Chart: Weekly Sales Trend -->
+                        <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-bold text-slate-900 text-sm">Ventas Semanales por Sede (COP)</h3>
+                                <span class="text-xs text-slate-400 font-medium">Actualizado hace 5 min</span>
+                            </div>
+                            <div class="h-56 flex items-end justify-between gap-4 pt-6 px-2 border-b border-slate-100">
+                                <div class="flex-1 flex flex-col items-center gap-2">
+                                    <div class="w-full bg-amber-500/80 rounded-t-lg hover:bg-amber-600 transition-all" style="height: 60%" title="Lunes: $4.2M"></div>
+                                    <span class="text-[11px] font-semibold text-slate-400">Lun</span>
+                                </div>
+                                <div class="flex-1 flex flex-col items-center gap-2">
+                                    <div class="w-full bg-amber-500/80 rounded-t-lg hover:bg-amber-600 transition-all" style="height: 50%" title="Martes: $3.8M"></div>
+                                    <span class="text-[11px] font-semibold text-slate-400">Mar</span>
+                                </div>
+                                <div class="flex-1 flex flex-col items-center gap-2">
+                                    <div class="w-full bg-amber-500/80 rounded-t-lg hover:bg-amber-600 transition-all" style="height: 65%" title="Miércoles: $4.9M"></div>
+                                    <span class="text-[11px] font-semibold text-slate-400">Mié</span>
+                                </div>
+                                <div class="flex-1 flex flex-col items-center gap-2">
+                                    <div class="w-full bg-amber-500/80 rounded-t-lg hover:bg-amber-600 transition-all" style="height: 75%" title="Jueves: $5.8M"></div>
+                                    <span class="text-[11px] font-semibold text-slate-400">Jue</span>
+                                </div>
+                                <div class="flex-1 flex flex-col items-center gap-2">
+                                    <div class="w-full bg-amber-500/80 rounded-t-lg hover:bg-amber-600 transition-all" style="height: 90%" title="Viernes: $8.4M"></div>
+                                    <span class="text-[11px] font-semibold text-slate-400">Vie</span>
+                                </div>
+                                <div class="flex-1 flex flex-col items-center gap-2">
+                                    <div class="w-full bg-amber-600 rounded-t-lg hover:bg-amber-700 transition-all shadow-md" style="height: 100%" title="Sábado: $11.2M"></div>
+                                    <span class="text-[11px] font-bold text-amber-600">Sáb</span>
+                                </div>
+                                <div class="flex-1 flex flex-col items-center gap-2">
+                                    <div class="w-full bg-amber-500/80 rounded-t-lg hover:bg-amber-600 transition-all" style="height: 85%" title="Domingo: $7.9M"></div>
+                                    <span class="text-[11px] font-semibold text-slate-400">Dom</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: Branch Performance & Quick Actions -->
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                            <div>
+                                <h3 class="font-bold text-slate-900 text-sm mb-4">Rendimiento por Sede (Mes)</h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <div class="flex justify-between text-xs font-semibold mb-1">
+                                            <span class="text-slate-700">Chapinero</span>
+                                            <span class="text-amber-600">$48.5M (98.9% Meta)</span>
+                                        </div>
+                                        <div class="w-full bg-slate-100 rounded-full h-2">
+                                            <div class="bg-amber-500 h-2 rounded-full" style="width: 98%;"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-xs font-semibold mb-1">
+                                            <span class="text-slate-700">Zona Rosa</span>
+                                            <span class="text-blue-600">$38.2M (89.6% Meta)</span>
+                                        </div>
+                                        <div class="w-full bg-slate-100 rounded-full h-2">
+                                            <div class="bg-blue-500 h-2 rounded-full" style="width: 89%;"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-xs font-semibold mb-1">
+                                            <span class="text-slate-700">Usaquén</span>
+                                            <span class="text-emerald-600">$37.1M (97.3% Meta)</span>
+                                        </div>
+                                        <div class="w-full bg-slate-100 rounded-full h-2">
+                                            <div class="bg-emerald-500 h-2 rounded-full" style="width: 97%;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pt-4 border-t border-slate-100 mt-4">
+                                <button onclick="switchView('reservas')" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-2 transition-colors">
+                                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                                    <span>Crear Nueva Reserva con Platos</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. RESERVATIONS & DISH SELECTION MODULE -->
+                <section id="viewReservas" class="hidden space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        
+                        <!-- Left Panel: Create Reservation Form with Dish Picker -->
+                        <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                            <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-lg">Registrar Nueva Reserva</h3>
+                                    <p class="text-xs text-slate-500">Asigna mesa y pre-ordena platos de la carta para el cliente.</p>
+                                </div>
+                                <span class="px-3 py-1 bg-amber-50 text-amber-700 text-xs font-bold rounded-lg border border-amber-200">
+                                    Punto de Venta / Salón
+                                </span>
+                            </div>
+
+                            <form onsubmit="handleReservationSubmit(event)" class="space-y-5">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre del Cliente *</label>
+                                        <input type="text" id="resClientName" required placeholder="Ej. María González" class="w-full px-3.5 py-2 rounded-lg border border-slate-200 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-600 mb-1">Sucursal *</label>
+                                        <select id="resBranch" required class="w-full px-3.5 py-2 rounded-lg border border-slate-200 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                                            <option value="Chapinero">Chapinero</option>
+                                            <option value="Zona Rosa">Zona Rosa</option>
+                                            <option value="Usaquén">Usaquén</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha y Hora *</label>
+                                        <input type="datetime-local" id="resDateTime" required class="w-full px-3.5 py-2 rounded-lg border border-slate-200 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-600 mb-1">Número de Personas / Mesa *</label>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <input type="number" id="resGuests" min="1" max="20" value="4" required class="w-full px-3.5 py-2 rounded-lg border border-slate-200 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none" placeholder="Pers.">
+                                            <input type="text" id="resTable" placeholder="Mesa (ej: 12A)" required class="w-full px-3.5 py-2 rounded-lg border border-slate-200 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- DISH SELECTION SECTION (Pre-orden de Menú) -->
+                                <div class="pt-4 border-t border-slate-100">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                                            <i data-lucide="utensils" class="w-4 h-4 text-amber-600"></i> Pre-Selección de Platos del Menú
+                                        </h4>
+                                        <span class="text-[11px] text-slate-400 font-medium">Opcional</span>
+                                    </div>
+
+                                    <!-- Menu Items Counter Grid -->
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-56 overflow-y-auto pr-1" id="menuItemsGrid">
+                                        <!-- Dish Item 1 -->
+                                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                                            <div>
+                                                <p class="text-xs font-bold text-slate-800">Lomo al Trapo</p>
+                                                <p class="text-[11px] text-amber-600 font-semibold">$42.000 COP</p>
+                                            </div>
+                                            <div class="flex items-center gap-2 bg-white rounded-lg border border-slate-200 px-2 py-1">
+                                                <button type="button" onclick="updateDishQty('lomo', -1)" class="text-slate-400 hover:text-slate-700 font-bold text-xs">-</button>
+                                                <span id="qty-lomo" class="text-xs font-bold text-slate-800 w-4 text-center">0</span>
+                                                <button type="button" onclick="updateDishQty('lomo', 1)" class="text-amber-600 font-bold text-xs">+</button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Dish Item 2 -->
+                                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                                            <div>
+                                                <p class="text-xs font-bold text-slate-800">Cóctel de Camarones</p>
+                                                <p class="text-[11px] text-amber-600 font-semibold">$28.000 COP</p>
+                                            </div>
+                                            <div class="flex items-center gap-2 bg-white rounded-lg border border-slate-200 px-2 py-1">
+                                                <button type="button" onclick="updateDishQty('coctel', -1)" class="text-slate-400 hover:text-slate-700 font-bold text-xs">-</button>
+                                                <span id="qty-coctel" class="text-xs font-bold text-slate-800 w-4 text-center">0</span>
+                                                <button type="button" onclick="updateDishQty('coctel', 1)" class="text-amber-600 font-bold text-xs">+</button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Dish Item 3 -->
+                                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                                            <div>
+                                                <p class="text-xs font-bold text-slate-800">Vino Malbec Reserva</p>
+                                                <p class="text-[11px] text-amber-600 font-semibold">$85.000 COP</p>
+                                            </div>
+                                            <div class="flex items-center gap-2 bg-white rounded-lg border border-slate-200 px-2 py-1">
+                                                <button type="button" onclick="updateDishQty('vino', -1)" class="text-slate-400 hover:text-slate-700 font-bold text-xs">-</button>
+                                                <span id="qty-vino" class="text-xs font-bold text-slate-800 w-4 text-center">0</span>
+                                                <button type="button" onclick="updateDishQty('vino', 1)" class="text-amber-600 font-bold text-xs">+</button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Dish Item 4 -->
+                                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                                            <div>
+                                                <p class="text-xs font-bold text-slate-800">Risotto de Hongos</p>
+                                                <p class="text-[11px] text-amber-600 font-semibold">$36.000 COP</p>
+                                            </div>
+                                            <div class="flex items-center gap-2 bg-white rounded-lg border border-slate-200 px-2 py-1">
+                                                <button type="button" onclick="updateDishQty('risotto', -1)" class="text-slate-400 hover:text-slate-700 font-bold text-xs">-</button>
+                                                <span id="qty-risotto" class="text-xs font-bold text-slate-800 w-4 text-center">0</span>
+                                                <button type="button" onclick="updateDishQty('risotto', 1)" class="text-amber-600 font-bold text-xs">+</button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-100 text-xs">
+                                        <span class="text-slate-500 font-medium">Subtotal Platos Pre-ordenados:</span>
+                                        <span id="dishSubtotal" class="font-bold text-slate-900">$0 COP</span>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl shadow-md shadow-amber-500/20 text-xs transition-all flex items-center justify-center gap-2">
+                                    <i data-lucide="check" class="w-4 h-4"></i> Confirmar y Guardar Reserva
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Right Panel: Live Occupancy & Active Reservations List -->
+                        <div class="space-y-6">
+                            <!-- Capacity / Aforo Widget -->
+                            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                                <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">Control de Aforo en Tiempo Real</h4>
+                                <div class="flex items-end justify-between mb-2">
+                                    <span id="aforoStatusText" class="text-xs font-bold text-emerald-600">Ocupación Normal</span>
+                                    <span id="aforoPercentage" class="text-xl font-bold text-slate-900">68%</span>
+                                </div>
+                                <div class="w-full bg-slate-100 rounded-full h-3 mb-3 overflow-hidden">
+                                    <div id="aforoProgressBar" class="bg-emerald-500 h-3 transition-all duration-500 rounded-full" style="width: 68%;"></div>
+                                </div>
+                                <p class="text-[11px] text-slate-500">Capacidad asignada: 34 de 50 mesas ocupadas en la sede actual.</p>
+                            </div>
+
+                            <!-- List of Confirmed Reservations -->
+                            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                                <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3">Reservas Agendadas</h4>
+                                <div class="space-y-3 max-h-72 overflow-y-auto pr-1" id="reservationsList">
+                                    <!-- Dynamic items inserted here -->
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- 3. REPORTS & PDF EXPORT MODULE -->
+                <section id="viewReportes" class="hidden space-y-6">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                            <div>
+                                <h3 class="font-bold text-slate-900 text-lg">Centro de Reportes & Business Intelligence</h3>
+                                <p class="text-xs text-slate-500">Descarga estados contables, análisis operacionales y auditorías en formato PDF listo para imprimir.</p>
+                            </div>
+                            <span class="px-3 py-1 bg-purple-50 text-purple-700 text-xs font-bold rounded-lg border border-purple-200">
+                                Módulo de Dirección
+                            </span>
+                        </div>
+
+                        <!-- 3 Dedicated PDF Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            
+                            <!-- Card 1: Reporte Mensual de Ventas -->
+                            <div class="border border-slate-200 rounded-2xl p-5 bg-slate-50 hover:bg-white hover:border-amber-500/50 hover:shadow-md transition-all flex flex-col justify-between">
+                                <div>
+                                    <div class="w-10 h-10 bg-amber-100 text-amber-700 rounded-xl flex items-center justify-center mb-4 font-bold">
+                                        <i data-lucide="file-spreadsheet" class="w-5 h-5"></i>
+                                    </div>
+                                    <h4 class="font-bold text-slate-900 text-base mb-1">Reporte Mensual de Ventas</h4>
+                                    <p class="text-xs text-slate-500 mb-4">Desglose consolidado por sucursal, ticket promedio y comparación de metas mensuales.</p>
+                                </div>
+                                <button onclick="generatePDF('ventas')" class="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl text-xs transition-colors flex items-center justify-center gap-2 shadow-sm">
+                                    <i data-lucide="download" class="w-4 h-4"></i> Descargar PDF Ventas
+                                </button>
+                            </div>
+
+                            <!-- Card 2: Análisis de Nómina -->
+                            <div class="border border-slate-200 rounded-2xl p-5 bg-slate-50 hover:bg-white hover:border-amber-500/50 hover:shadow-md transition-all flex flex-col justify-between">
+                                <div>
+                                    <div class="w-10 h-10 bg-blue-100 text-blue-700 rounded-xl flex items-center justify-center mb-4 font-bold">
+                                        <i data-lucide="users" class="w-5 h-5"></i>
+                                    </div>
+                                    <h4 class="font-bold text-slate-900 text-base mb-1">Análisis de Nómina</h4>
+                                    <p class="text-xs text-slate-500 mb-4">Costos laborales por cargo, distribución de turnos y salarios ejecutados por sucursal.</p>
+                                </div>
+                                <button onclick="generatePDF('nomina')" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs transition-colors flex items-center justify-center gap-2 shadow-sm">
+                                    <i data-lucide="download" class="w-4 h-4"></i> Descargar PDF Nómina
+                                </button>
+                            </div>
+
+                            <!-- Card 3: Estado de Inventario -->
+                            <div class="border border-slate-200 rounded-2xl p-5 bg-slate-50 hover:bg-white hover:border-amber-500/50 hover:shadow-md transition-all flex flex-col justify-between">
+                                <div>
+                                    <div class="w-10 h-10 bg-emerald-100 text-emerald-700 rounded-xl flex items-center justify-center mb-4 font-bold">
+                                        <i data-lucide="package" class="w-5 h-5"></i>
+                                    </div>
+                                    <h4 class="font-bold text-slate-900 text-base mb-1">Estado de Inventario</h4>
+                                    <p class="text-xs text-slate-500 mb-4">Auditoría de stock crítico de insumos, valoración en bodega y alerta de proveedores.</p>
+                                </div>
+                                <button onclick="generatePDF('inventario')" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-xs transition-colors flex items-center justify-center gap-2 shadow-sm">
+                                    <i data-lucide="download" class="w-4 h-4"></i> Descargar PDF Inventario
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. EMPLOYEES & STAFF MODULE -->
+                <section id="viewEmpleados" class="hidden space-y-6">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                            <div>
+                                <h3 class="font-bold text-slate-900 text-lg">Directorio de Talento Humano y Programación de Turnos</h3>
+                                <p class="text-xs text-slate-500">Asignación de turnos (Mañana, Tarde, Noche), tareas diarias y manuales por sede.</p>
+                            </div>
+                            
+                            <!-- Filter & Action buttons -->
+                            <div class="flex items-center gap-3">
+                                <select id="filterShift" onchange="filterEmployeesByShift(this.value)" class="text-xs font-semibold text-slate-700 bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                    <option value="todos">Todos los Turnos</option>
+                                    <option value="Mañana">Turno Mañana (07:00 - 15:00)</option>
+                                    <option value="Tarde">Turno Tarde (15:00 - 23:00)</option>
+                                    <option value="Noche">Turno Noche (23:00 - 07:00)</option>
+                                </select>
+                                <button onclick="openTurnoModal()" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs">
+                                    <i data-lucide="clock" class="w-4 h-4"></i> Asignar Turno
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Turnos Summary Badges -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+                            <div class="p-3 bg-amber-50/60 border border-amber-200/80 rounded-xl flex items-center justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-xs">
+                                        <i data-lucide="sun" class="w-4 h-4"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-bold text-slate-800">Turno Mañana</p>
+                                        <p class="text-[10px] text-slate-500">07:00 - 15:00</p>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-bold text-amber-700 bg-amber-100/80 px-2.5 py-1 rounded-lg">3 En Servicio</span>
+                            </div>
+
+                            <div class="p-3 bg-blue-50/60 border border-blue-200/80 rounded-xl flex items-center justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center font-bold text-xs">
+                                        <i data-lucide="sunset" class="w-4 h-4"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-bold text-slate-800">Turno Tarde</p>
+                                        <p class="text-[10px] text-slate-500">15:00 - 23:00</p>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-bold text-blue-700 bg-blue-100/80 px-2.5 py-1 rounded-lg">2 En Servicio</span>
+                            </div>
+
+                            <div class="p-3 bg-purple-50/60 border border-purple-200/80 rounded-xl flex items-center justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-lg bg-purple-100 text-purple-800 flex items-center justify-center font-bold text-xs">
+                                        <i data-lucide="moon" class="w-4 h-4"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-bold text-slate-800">Turno Noche</p>
+                                        <p class="text-[10px] text-slate-500">23:00 - 07:00</p>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-bold text-purple-700 bg-purple-100/80 px-2.5 py-1 rounded-lg">2 En Servicio</span>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-200 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                        <th class="py-3 px-4">Empleado</th>
+                                        <th class="py-3 px-4">Cargo / Rol</th>
+                                        <th class="py-3 px-4">Sucursal</th>
+                                        <th class="py-3 px-4">Turno Asignado</th>
+                                        <th class="py-3 px-4">Horario</th>
+                                        <th class="py-3 px-4">Salario</th>
+                                        <th class="py-3 px-4">Estado</th>
+                                        <th class="py-3 px-4 text-center">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-xs font-medium text-slate-700 divide-y divide-slate-100" id="employeeTableBody">
+                                    <!-- Dynamic Rows Populated via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. CHAT INTERNO HIERARCHICAL MODULE -->
+                <section id="viewChat" class="hidden space-y-6">
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col h-[500px]">
+                        <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-amber-100 text-amber-700 rounded-lg flex items-center justify-center font-bold">
+                                    <i data-lucide="message-square" class="w-4 h-4"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-sm">Canal Jerárquico Interno</h3>
+                                    <p class="text-[11px] text-slate-400">Mensajería Cifrada TLS 1.3</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chat Messages List -->
+                        <div id="chatMessages" class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50/50">
+                            <div class="flex flex-col items-start">
+                                <div class="bg-white border border-slate-200 rounded-2xl p-3 max-w-sm shadow-xs">
+                                    <p class="text-[10px] font-bold text-amber-600 mb-0.5">Chef Juan Medina (Chapinero)</p>
+                                    <p class="text-xs text-slate-700">El pedido de carnes premium ya fue confirmado por el proveedor para entrega mañana a las 7:00 AM.</p>
+                                </div>
+                                <span class="text-[9px] text-slate-400 mt-1">14:22 PM</span>
+                            </div>
+
+                            <div class="flex flex-col items-end">
+                                <div class="bg-amber-500 text-white rounded-2xl p-3 max-w-sm shadow-xs">
+                                    <p class="text-[10px] font-bold text-amber-100 mb-0.5">Tú (Danna Castillo)</p>
+                                    <p class="text-xs">Excelente Juan, favor auditar la factura contra la orden de compra antes de autorizar la entrada.</p>
+                                </div>
+                                <span class="text-[9px] text-slate-400 mt-1">14:25 PM</span>
+                            </div>
+                        </div>
+
+                        <!-- Chat Input Box -->
+                        <form onsubmit="sendChatMessage(event)" class="p-3 bg-white border-t border-slate-100 flex gap-2">
+                            <input type="text" id="chatInput" placeholder="Escribe un mensaje jerárquico..." class="flex-1 px-4 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                            <button type="submit" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition-colors">
+                                Enviar
+                            </button>
+                        </form>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- HIDDEN PDF REPORT TEMPLATES (USED BY HTML2PDF FOR GENERATION) -->
+    <div class="hidden">
+        
+        <!-- PDF Template: Ventas -->
+        <div id="pdfVentas" class="pdf-template p-8 bg-white text-slate-800">
+            <div class="flex justify-between items-center border-b border-slate-300 pb-4 mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-amber-600">GastroChain ERP</h1>
+                    <p class="text-xs text-slate-500">Sistema de Gestión Integral Multi-Sede</p>
+                </div>
+                <div class="text-right">
+                    <h2 class="text-base font-bold text-slate-900">REPORTE MENSUAL DE VENTAS</h2>
+                    <p class="text-xs text-slate-500">Periodo: Agosto 2026</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4 mb-6">
+                <div class="p-3 bg-slate-100 rounded border border-slate-200">
+                    <p class="text-[10px] uppercase font-bold text-slate-500">Ventas Totales</p>
+                    <p class="text-lg font-bold text-slate-900">$123.900.000 COP</p>
+                </div>
+                <div class="p-3 bg-slate-100 rounded border border-slate-200">
+                    <p class="text-[10px] uppercase font-bold text-slate-500">Tickets Emitidos</p>
+                    <p class="text-lg font-bold text-slate-900">1.842 Tickets</p>
+                </div>
+                <div class="p-3 bg-slate-100 rounded border border-slate-200">
+                    <p class="text-[10px] uppercase font-bold text-slate-500">Ticket Promedio</p>
+                    <p class="text-lg font-bold text-slate-900">$67.200 COP</p>
+                </div>
+            </div>
+
+            <h3 class="text-sm font-bold mb-2">Desglose por Sucursal</h3>
+            <table class="w-full text-xs text-left border-collapse border border-slate-300 mb-6">
+                <thead class="bg-slate-200">
+                    <tr>
+                        <th class="p-2 border border-slate-300">Sucursal</th>
+                        <th class="p-2 border border-slate-300">Ventas (COP)</th>
+                        <th class="p-2 border border-slate-300">% Meta</th>
+                        <th class="p-2 border border-slate-300">Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="p-2 border border-slate-300 font-bold">Chapinero</td>
+                        <td class="p-2 border border-slate-300">$48.500.000</td>
+                        <td class="p-2 border border-slate-300">98.9%</td>
+                        <td class="p-2 border border-slate-300 font-bold text-emerald-700">Cumplido</td>
+                    </tr>
+                    <tr>
+                        <td class="p-2 border border-slate-300 font-bold">Zona Rosa</td>
+                        <td class="p-2 border border-slate-300">$38.200.000</td>
+                        <td class="p-2 border border-slate-300">89.6%</td>
+                        <td class="p-2 border border-slate-300 font-bold text-amber-700">En revisión</td>
+                    </tr>
+                    <tr>
+                        <td class="p-2 border border-slate-300 font-bold">Usaquén</td>
+                        <td class="p-2 border border-slate-300">$37.200.000</td>
+                        <td class="p-2 border border-slate-300">97.3%</td>
+                        <td class="p-2 border border-slate-300 font-bold text-emerald-700">Cumplido</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p class="text-[10px] text-slate-400 text-center">Documento oficial generado automáticamente por GastroChain ERP - Bogotá, Colombia</p>
+        </div>
+
+        <!-- PDF Template: Nómina -->
+        <div id="pdfNomina" class="pdf-template p-8 bg-white text-slate-800">
+            <div class="flex justify-between items-center border-b border-slate-300 pb-4 mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-blue-600">GastroChain ERP</h1>
+                    <p class="text-xs text-slate-500">Módulo de Talento Humano & Gestión de Turnos</p>
+                </div>
+                <div class="text-right">
+                    <h2 class="text-base font-bold text-slate-900">ANÁLISIS DE NÓMINA Y PROGRAMACIÓN DE TURNOS</h2>
+                    <p class="text-xs text-slate-500">Fecha de corte: Agosto 2026</p>
+                </div>
+            </div>
+
+            <div class="p-3 bg-slate-100 rounded border border-slate-200 mb-6">
+                <p class="text-[10px] uppercase font-bold text-slate-500">Costo Total Nómina Mensual</p>
+                <p class="text-xl font-bold text-slate-900">$19.900.000 COP</p>
+            </div>
+
+            <h3 class="text-sm font-bold mb-2">Resumen de Personal y Distribución de Turnos</h3>
+            <table class="w-full text-xs text-left border-collapse border border-slate-300 mb-6">
+                <thead class="bg-slate-200">
+                    <tr>
+                        <th class="p-2 border border-slate-300">Empleado</th>
+                        <th class="p-2 border border-slate-300">Cargo</th>
+                        <th class="p-2 border border-slate-300">Sucursal</th>
+                        <th class="p-2 border border-slate-300">Turno Programado</th>
+                        <th class="p-2 border border-slate-300">Salario</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="p-2 border border-slate-300 font-bold">Juan Medina</td>
+                        <td class="p-2 border border-slate-300">Chef Ejecutivo</td>
+                        <td class="p-2 border border-slate-300">Chapinero</td>
+                        <td class="p-2 border border-slate-300 font-semibold text-amber-700">Mañana (07:00 - 15:00)</td>
+                        <td class="p-2 border border-slate-300">$4.800.000</td>
+                    </tr>
+                    <tr>
+                        <td class="p-2 border border-slate-300 font-bold">Camila Ruiz</td>
+                        <td class="p-2 border border-slate-300">Sommelier</td>
+                        <td class="p-2 border border-slate-300">Zona Rosa</td>
+                        <td class="p-2 border border-slate-300 font-semibold text-purple-700">Noche (23:00 - 07:00)</td>
+                        <td class="p-2 border border-slate-300">$3.200.000</td>
+                    </tr>
+                    <tr>
+                        <td class="p-2 border border-slate-300 font-bold">Andrés López</td>
+                        <td class="p-2 border border-slate-300">Mesero Principal</td>
+                        <td class="p-2 border border-slate-300">Usaquén</td>
+                        <td class="p-2 border border-slate-300 font-semibold text-blue-700">Tarde (15:00 - 23:00)</td>
+                        <td class="p-2 border border-slate-300">$1.800.000</td>
+                    </tr>
+                    <tr>
+                        <td class="p-2 border border-slate-300 font-bold">Santiago Mora</td>
+                        <td class="p-2 border border-slate-300">Bartender</td>
+                        <td class="p-2 border border-slate-300">Chapinero</td>
+                        <td class="p-2 border border-slate-300 font-semibold text-purple-700">Noche (23:00 - 07:00)</td>
+                        <td class="p-2 border border-slate-300">$2.200.000</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p class="text-[10px] text-slate-400 text-center">Documento oficial generado automáticamente por GastroChain ERP - Bogotá, Colombia</p>
+        </div>
+
+        <!-- PDF Template: Inventario -->
+        <div id="pdfInventario" class="pdf-template p-8 bg-white text-slate-800">
+            <div class="flex justify-between items-center border-b border-slate-300 pb-4 mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-emerald-600">GastroChain ERP</h1>
+                    <p class="text-xs text-slate-500">Módulo de Suministros e Insumos</p>
+                </div>
+                <div class="text-right">
+                    <h2 class="text-base font-bold text-slate-900">ESTADO DE INVENTARIO Y STOCK</h2>
+                    <p class="text-xs text-slate-500">Auditoría: Agosto 2026</p>
+                </div>
+            </div>
+
+            <h3 class="text-sm font-bold mb-2">Auditoría de Insumos Críticos</h3>
+            <table class="w-full text-xs text-left border-collapse border border-slate-300 mb-6">
+                <thead class="bg-slate-200">
+                    <tr>
+                        <th class="p-2 border border-slate-300">Insumo</th>
+                        <th class="p-2 border border-slate-300">Proveedor</th>
+                        <th class="p-2 border border-slate-300">Stock Actual</th>
+                        <th class="p-2 border border-slate-300">Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="p-2 border border-slate-300 font-bold">Lomo de Res Premium</td>
+                        <td class="p-2 border border-slate-300">Carnes Premium S.A.</td>
+                        <td class="p-2 border border-slate-300">45 Kg</td>
+                        <td class="p-2 border border-slate-300 font-bold text-emerald-700">Suficiente</td>
+                    </tr>
+                    <tr>
+                        <td class="p-2 border border-slate-300 font-bold">Vino Malbec Reserva</td>
+                        <td class="p-2 border border-slate-300">Vinos & Licores BG</td>
+                        <td class="p-2 border border-slate-300">3 Botellas</td>
+                        <td class="p-2 border border-slate-300 font-bold text-red-600">Bajo Stock (Reordenar)</td>
+                    </tr>
+                    <tr>
+                        <td class="p-2 border border-slate-300 font-bold">Camarón Tigre</td>
+                        <td class="p-2 border border-slate-300">Mariscos del Pacífico</td>
+                        <td class="p-2 border border-slate-300">18 Kg</td>
+                        <td class="p-2 border border-slate-300 font-bold text-emerald-700">Suficiente</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p class="text-[10px] text-slate-400 text-center">Documento oficial generado automáticamente por GastroChain ERP - Bogotá, Colombia</p>
+        </div>
+
+    </div>
+
+    <!-- JAVASCRIPT LOGIC & ARCHITECTURE DOCUMENTATION -->
+    <script>
+        /**
+         * GastroChain ERP - State Management & Logic Core
+         */
+
+        // Current Auth User State
+        let currentUserRole = null;
+        let selectedBranch = 'chapinero';
+
+        // Pre-ordered Dish quantities for dynamic reservation creation
+        let dishQuantities = {
+            lomo: 0,
+            coctel: 0,
+            vino: 0,
+            risotto: 0
+        };
+
+        const dishPrices = {
+            lomo: 42000,
+            coctel: 28000,
+            vino: 85000,
+            risotto: 36000
+        };
+
+        // Active Reservations State
+        let reservationsData = [
+            { id: 'R-2841', client: 'María González', branch: 'Chapinero', datetime: '2026-08-23 19:30', guests: 4, table: '12A', dishes: '2x Lomo, 1x Vino', total: '$169.000 COP', status: 'Confirmada' },
+            { id: 'R-2840', client: 'Carlos Ramírez', branch: 'Zona Rosa', datetime: '2026-08-23 20:00', guests: 6, table: '08B', dishes: '3x Risotto', total: '$108.000 COP', status: 'Pendiente' },
+            { id: 'R-2839', client: 'Ana Martínez', branch: 'Usaquén', datetime: '2026-08-23 13:00', guests: 2, table: '04C', dishes: '1x Cóctel, 1x Vino', total: '$113.000 COP', status: 'Sentada' }
+        ];
+        
+        // Staff State with Shift Management
+        let employeesData = [
+            { id: 'E-101', name: 'Juan Medina', role: 'Chef Ejecutivo', branch: 'Chapinero', shift: 'Mañana', shiftHours: '07:00 - 15:00', salary: '$4.800.000', status: 'Activo' },
+            { id: 'E-102', name: 'Camila Ruiz', role: 'Sommelier', branch: 'Zona Rosa', shift: 'Noche', shiftHours: '23:00 - 07:00', salary: '$3.200.000', status: 'Activo' },
+            { id: 'E-103', name: 'Andrés López', role: 'Mesero Principal', branch: 'Usaquén', shift: 'Tarde', shiftHours: '15:00 - 23:00', salary: '$1.800.000', status: 'Activo' },
+            { id: 'E-104', name: 'Valentina Cruz', role: 'Hostess', branch: 'Zona Rosa', shift: 'Mañana', shiftHours: '07:00 - 15:00', salary: '$1.600.000', status: 'Inactivo' },
+            { id: 'E-105', name: 'Santiago Mora', role: 'Bartender', branch: 'Chapinero', shift: 'Noche', shiftHours: '23:00 - 07:00', salary: '$2.200.000', status: 'Activo' },
+            { id: 'E-106', name: 'Isabella Reyes', role: 'Sous Chef', branch: 'Usaquén', shift: 'Mañana', shiftHours: '07:00 - 15:00', salary: '$3.600.000', status: 'Activo' },
+            { id: 'E-107', name: 'Mateo Silva', role: 'Cajero', branch: 'Zona Rosa', shift: 'Tarde', shiftHours: '15:00 - 23:00', salary: '$1.700.000', status: 'Activo' }
+        ];
+
+        // Initialize icons and render tables on DOM ready
+        window.onload = function() {
+            lucide.createIcons();
+            renderReservationsList();
+            renderEmployeesTable();
+        };
+
+        /**
+         * AUTHENTICATION & LOGIN HANDLERS
+         */
+      function quickLogin(role) {
+            currentUserRole = role;
+            const userAvatar = document.getElementById('userAvatar');
+            const userName = document.getElementById('userName');
+            const userRoleBadge = document.getElementById('userRoleBadge');
+
+            const perfiles = {
+                'dueño': { av: 'DC', nom: 'Danna Castillo', badge: 'Dueño (Admin)', vista: 'dashboard' },
+                'gerente': { av: 'CM', nom: 'Carlos Mendoza', badge: 'Gerente Sucursal', vista: 'dashboard' },
+                'mesero': { av: 'AL', nom: 'Andrés López', badge: 'Mesero / Salón', vista: 'reservas' },
+                'cocina': { av: 'MS', nom: 'Mateo Silva', badge: 'Cocina / KDS', vista: 'reservas' },
+                'cajero': { av: 'SC', nom: 'Sofía Castro', badge: 'Cajero / Facturación', vista: 'reportes' }
+            };
+
+            const p = perfiles[role] || perfiles['mesero'];
+            userAvatar.innerText = p.av;
+            userName.innerText = p.nom;
+            userRoleBadge.innerText = p.badge;
+
+            renderNavLinks(role);
+            document.getElementById('loginModal').classList.add('hidden');
+            document.getElementById('appContainer').classList.remove('hidden');
+            switchView(p.vista);
+        }
+/**
+         * NAVIGATION & NAVIGATION BAR POPULATOR
+         */
+        function renderNavLinks(role) {
+            const nav = document.getElementById('navLinks');
+            nav.innerHTML = '';
+
+            const links = [
+                { id: 'dashboard', label: 'Dashboard BI', icon: 'layout-dashboard', roles: ['dueño', 'gerente'] },
+                { id: 'reservas', label: 'Reservas & Menú', icon: 'calendar-check', roles: ['dueño', 'gerente', 'mesero', 'cocina'] },
+                { id: 'reportes', label: 'Reportes & PDF', icon: 'file-text', roles: ['dueño', 'gerente', 'cajero'] },
+                { id: 'empleados', label: 'Personal & Turnos', icon: 'users', roles: ['dueño', 'gerente'] },
+                { id: 'chat', label: 'Chat Interno', icon: 'message-square', roles: ['dueño', 'gerente', 'mesero', 'cocina', 'cajero'] }
+            ];
+
+            links.forEach(link => {
+                if (link.roles.includes(role)) {
+                    const btn = document.createElement('button');
+                    btn.onclick = () => switchView(link.id);
+                    btn.id = `nav-btn-${link.id}`;
+                    btn.className = `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all text-slate-600 hover:bg-slate-100 hover:text-slate-900`;
+                    btn.innerHTML = `<i data-lucide="${link.icon}" class="w-4 h-4"></i><span>${link.label}</span>`;
+                    nav.appendChild(btn);
+                }
+            });
+            lucide.createIcons();
+        }
+
+        
+
+        function switchView(viewId) {
+            const views = ['Dashboard', 'Reservas', 'Reportes', 'Empleados', 'Chat'];
+            views.forEach(v => {
+                const el = document.getElementById(`view${v}`);
+                if (el) el.classList.add('hidden');
+
+                const navBtn = document.getElementById(`nav-btn-${v.toLowerCase()}`);
+                if (navBtn) {
+                    navBtn.classList.remove('bg-amber-500', 'text-white', 'shadow-md', 'shadow-amber-500/20');
+                    navBtn.classList.add('text-slate-600');
+                }
+            });
+
+            const targetView = document.getElementById(`view${viewId.charAt(0).toUpperCase() + viewId.slice(1)}`);
+            if (targetView) targetView.classList.remove('hidden');
+
+            const activeBtn = document.getElementById(`nav-btn-${viewId}`);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-amber-500', 'text-white', 'shadow-md', 'shadow-amber-500/20');
+                activeBtn.classList.remove('text-slate-600');
+            }
+
+            const titles = {
+                dashboard: 'Panel de Control (BI)',
+                reservas: 'Gestión de Reservas y Pre-Selección de Platos',
+                reportes: 'Centro de Reportes & Exportación PDF',
+                empleados: 'Directorio de Talento Humano y Turnos',
+                chat: 'Mensajería Jerárquica Cifrada'
+            };
+            document.getElementById('currentViewTitle').innerText = titles[viewId] || 'GastroChain ERP';
+        }
+
+        function changeBranch(branchVal) {
+            selectedBranch = branchVal;
+            const badge = document.getElementById('branchBadge');
+            const branchMap = {
+                todas: 'Todas las Sedes',
+                chapinero: 'Sede Chapinero',
+                zonarosa: 'Sede Zona Rosa',
+                usaquen: 'Sede Usaquén'
+            };
+            badge.innerText = branchMap[branchVal] || 'Sede Seleccionada';
+        }
+
+        function dismissAforoAlert() {
+            document.getElementById('alertAforoBanner').classList.add('hidden');
+        }
+
+        /**
+         * DISH SELECTION & RESERVATION HANDLING
+         */
+        function updateDishQty(dishId, delta) {
+            if (dishQuantities[dishId] + delta < 0) return;
+            dishQuantities[dishId] += delta;
+            document.getElementById(`qty-${dishId}`).innerText = dishQuantities[dishId];
+            calculateSubtotal();
+        }
+
+        function calculateSubtotal() {
+            let subtotal = 0;
+            for (let dish in dishQuantities) {
+                subtotal += dishQuantities[dish] * dishPrices[dish];
+            }
+            document.getElementById('dishSubtotal').innerText = `$${subtotal.toLocaleString('es-CO')} COP`;
+        }
+
+        function handleReservationSubmit(e) {
+            e.preventDefault();
+            const client = document.getElementById('resClientName').value;
+            const branch = document.getElementById('resBranch').value;
+            const datetime = document.getElementById('resDateTime').value;
+            const guests = document.getElementById('resGuests').value;
+            const table = document.getElementById('resTable').value;
+
+            let dishSummary = [];
+            let totalVal = 0;
+            if (dishQuantities.lomo > 0) { dishSummary.push(`${dishQuantities.lomo}x Lomo`); totalVal += dishQuantities.lomo * dishPrices.lomo; }
+            if (dishQuantities.coctel > 0) { dishSummary.push(`${dishQuantities.coctel}x Cóctel`); totalVal += dishQuantities.coctel * dishPrices.coctel; }
+            if (dishQuantities.vino > 0) { dishSummary.push(`${dishQuantities.vino}x Vino`); totalVal += dishQuantities.vino * dishPrices.vino; }
+            if (dishQuantities.risotto > 0) { dishSummary.push(`${dishQuantities.risotto}x Risotto`); totalVal += dishQuantities.risotto * dishPrices.risotto; }
+
+            const newRes = {
+                id: `R-${Math.floor(1000 + Math.random() * 9000)}`,
+                client: client,
+                branch: branch,
+                datetime: datetime.replace('T', ' ') || '2026-08-23 20:00',
+                guests: guests,
+                table: table,
+                dishes: dishSummary.join(', ') || 'Sin pre-orden',
+                total: `$${totalVal.toLocaleString('es-CO')} COP`,
+                status: 'Confirmada'
+            };
+
+            reservationsData.unshift(newRes);
+            renderReservationsList();
+
+            // Reset form
+            document.getElementById('resClientName').value = '';
+            document.getElementById('resTable').value = '';
+            dishQuantities = { lomo: 0, coctel: 0, vino: 0, risotto: 0 };
+            ['lomo', 'coctel', 'vino', 'risotto'].forEach(d => {
+                document.getElementById(`qty-${d}`).innerText = '0';
+            });
+            calculateSubtotal();
+
+            // Check Aforo Alert Trigger (>90%)
+            if (reservationsData.length >= 5) {
+                document.getElementById('alertAforoBanner').classList.remove('hidden');
+                document.getElementById('dashAforoPercent').innerText = '92%';
+                document.getElementById('dashAforoBar').style.width = '92%';
+                document.getElementById('dashAforoBar').className = 'bg-red-500 h-2 rounded-full';
+                document.getElementById('aforoProgressBar').style.width = '92%';
+                document.getElementById('aforoProgressBar').className = 'bg-red-500 h-3 rounded-full';
+                document.getElementById('aforoPercentage').innerText = '92%';
+                document.getElementById('aforoStatusText').innerText = 'CRÍTICO (≥90%)';
+                document.getElementById('aforoStatusText').className = 'text-xs font-bold text-red-600';
+            }
+        }
+
+        function renderReservationsList() {
+            const list = document.getElementById('reservationsList');
+            if (!list) return;
+            list.innerHTML = '';
+            reservationsData.forEach(res => {
+                const item = document.createElement('div');
+                item.className = 'p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs flex flex-col gap-1';
+                item.innerHTML = `
+                    <div class="flex items-center justify-between font-bold">
+                        <span class="text-slate-900">${res.client} (${res.guests} pers.)</span>
+                        <span class="text-amber-600 font-mono">${res.table}</span>
+                    </div>
+                    <div class="flex items-center justify-between text-[11px] text-slate-500">
+                        <span>${res.branch} • ${res.datetime}</span>
+                        <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold">${res.status}</span>
+                    </div>
+                    ${res.dishes !== 'Sin pre-orden' ? `<p class="text-[10px] text-slate-600 font-semibold mt-1">Platos: ${res.dishes} (${res.total})</p>` : ''}
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        /**
+         * PDF GENERATOR (HTML2PDF INTEGRATION)
+         */
+        function generatePDF(type) {
+            let elementId = '';
+            let fileName = '';
+            if (type === 'ventas') {
+                elementId = 'pdfVentas';
+                fileName = 'Reporte_Ventas_GastroChain.pdf';
+            } else if (type === 'nomina') {
+                elementId = 'pdfNomina';
+                fileName = 'Analisis_Nomina_Turnos_GastroChain.pdf';
+            } else if (type === 'inventario') {
+                elementId = 'pdfInventario';
+                fileName = 'Estado_Inventario_GastroChain.pdf';
+            }
+
+            const element = document.getElementById(elementId);
+            const opt = {
+                margin: 0.5,
+                filename: fileName,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save();
+        }
+
+        /**
+         * CHAT MESSAGING LOGIC
+         */
+        function sendChatMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('chatInput');
+            const msgText = input.value.trim();
+            if (!msgText) return;
+
+            const chatMessages = document.getElementById('chatMessages');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'flex flex-col items-end';
+            msgDiv.innerHTML = `
+                <div class="bg-amber-500 text-white rounded-2xl p-3 max-w-sm shadow-xs">
+                    <p class="text-[10px] font-bold text-amber-100 mb-0.5">Tú</p>
+                    <p class="text-xs">${msgText}</p>
+                </div>
+                <span class="text-[9px] text-slate-400 mt-1">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            `;
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            input.value = '';
+        }
+
+        /**
+         * RENDER EMPLOYEES TABLE WITH SHIFT BADGES
+         */
+        function renderEmployeesTable(filterShift = 'todos') {
+            const tbody = document.getElementById('employeeTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            const filtered = filterShift === 'todos' 
+                ? employeesData 
+                : employeesData.filter(e => e.shift === filterShift);
+
+            filtered.forEach(emp => {
+                let shiftBadgeStyle = '';
+                if (emp.shift === 'Mañana') shiftBadgeStyle = 'bg-amber-100 text-amber-800 border-amber-200';
+                else if (emp.shift === 'Tarde') shiftBadgeStyle = 'bg-blue-100 text-blue-800 border-blue-200';
+                else if (emp.shift === 'Noche') shiftBadgeStyle = 'bg-purple-100 text-purple-800 border-purple-200';
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition-colors';
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-bold text-slate-900">${emp.name}</td>
+                    <td class="py-3 px-4">${emp.role}</td>
+                    <td class="py-3 px-4">${emp.branch}</td>
+                    <td class="py-3 px-4">
+                        <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold border ${shiftBadgeStyle}">
+                            ${emp.shift}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 font-mono text-[11px] text-slate-600">${emp.shiftHours}</td>
+                    <td class="py-3 px-4 font-semibold text-slate-800">${emp.salary}</td>
+                    <td class="py-3 px-4">
+                        <span class="px-2 py-0.5 ${emp.status === 'Activo' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'} rounded font-semibold text-[10px]">
+                            ${emp.status}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                        <button onclick="changeEmployeeShift('${emp.id}')" class="text-amber-600 hover:text-amber-700 font-bold text-xs underline">
+                            Cambiar Turno
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filterEmployeesByShift(shift) {
+            renderEmployeesTable(shift);
+        }
+
+        function changeEmployeeShift(empId) {
+            const emp = employeesData.find(e => e.id === empId);
+            if (!emp) return;
+
+            const shifts = ['Mañana', 'Tarde', 'Noche'];
+            const nextShiftIndex = (shifts.indexOf(emp.shift) + 1) % shifts.length;
+            const newShift = shifts[nextShiftIndex];
+
+            const shiftHoursMap = {
+                'Mañana': '07:00 - 15:00',
+                'Tarde': '15:00 - 23:00',
+                'Noche': '23:00 - 07:00'
+            };
+
+            emp.shift = newShift;
+            emp.shiftHours = shiftHoursMap[newShift];
+
+            renderEmployeesTable(document.getElementById('filterShift').value);
+        }
+
+        function openTurnoModal() {
+            alert('Selecciona "Cambiar Turno" en la fila del colaborador deseado para alternar rotativamente entre Mañana, Tarde y Noche.');
+        }
+    </script>
+    <script src="app.js"></script>
+</body>
+</html>
